@@ -34,20 +34,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProjectHeaderProps {
   project: Project;
   tasks?: Task[];
+  onProjectUpdate?: (updatedProject: Project) => void;
 }
 
-export function ProjectHeader({ project }: ProjectHeaderProps) {
+export function ProjectHeader({ project, tasks, onProjectUpdate }: ProjectHeaderProps) {
   const [isStarred, setIsStarred] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentProject, setCurrentProject] = useState<Project>(project);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  
+  // Update the local state when the project prop changes
+  useEffect(() => {
+    setCurrentProject(project);
+  }, [project]);
+  
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setCurrentProject(updatedProject);
+    if (onProjectUpdate) {
+      onProjectUpdate(updatedProject);
+    }
+  };
   
   const handleDeleteProject = async () => {
-    const success = await deleteProject(project.id);
+    const success = await deleteProject(currentProject.id);
     if (success) {
       navigate('/projects');
     }
@@ -58,7 +74,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
       <div className="flex flex-wrap justify-between items-start gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{project.name}</h1>
+            <h1 className="text-2xl font-bold">{currentProject.name}</h1>
             <Button 
               variant="ghost" 
               size="icon" 
@@ -70,7 +86,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
               />
             </Button>
           </div>
-          <p className="text-muted-foreground">{project.description}</p>
+          <p className="text-muted-foreground">{currentProject.description}</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -112,7 +128,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Created</p>
-            <p className="font-medium">{new Date(project.created_at).toLocaleDateString()}</p>
+            <p className="font-medium">{new Date(currentProject.created_at).toLocaleDateString()}</p>
           </div>
         </div>
         
@@ -122,7 +138,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Last updated</p>
-            <p className="font-medium">{new Date(project.updated_at).toLocaleDateString()}</p>
+            <p className="font-medium">{new Date(currentProject.updated_at).toLocaleDateString()}</p>
           </div>
         </div>
         
@@ -141,7 +157,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
       </div>
       
       <Tabs defaultValue="board" className="w-full">
-        <TabsList className="w-full justify-start">
+        <TabsList className={`${isMobile ? 'flex overflow-x-auto' : 'w-full'} justify-start`}>
           <TabsTrigger value="board" className="flex gap-2">
             Board
           </TabsTrigger>
@@ -159,9 +175,10 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
 
       {/* Edit Project Dialog */}
       <EditProjectDialog
-        project={project}
+        project={currentProject}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+        onSuccess={handleProjectUpdate}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { fetchUserProfile } from "@/services/projectService";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,16 +30,24 @@ import {
   Menu, 
   X, 
   Search,
-  Bell
+  Bell,
+  LogOut,
+  User,
+  Link,
+  Home,
+  ListTodo,
+  Users,
+  BarChart2,
+  UserCircle
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Badge } from "./ui/badge";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard" },
-  { name: "Projects", href: "/projects" },
-  { name: "Teams", href: "/teams" },
-  { name: "Reports", href: "/reports" },
+  { name: "Dashboard", href: "/dashboard", icon: <Home className="h-5 w-5" /> },
+  { name: "Projects", href: "/projects", icon: <ListTodo className="h-5 w-5" /> },
+  { name: "Teams", href: "/teams", icon: <Users className="h-5 w-5" /> },
+  { name: "Reports", href: "/reports", icon: <BarChart2 className="h-5 w-5" /> },
 ];
 
 
@@ -52,12 +61,15 @@ export function Header({ setSearchQuery, handleGlobalSearch }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const location = useLocation();
 
   const { data: userProfile } = useQuery({
     queryKey: ['userProfile', user?.id],
     queryFn: () => fetchUserProfile(user?.id || ""),
     enabled: !!user,
   });
+
+  const isActive = (path: string) => location.pathname === path;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
@@ -203,70 +215,80 @@ export function Header({ setSearchQuery, handleGlobalSearch }: HeaderProps) {
       </nav>
       
       {/* Mobile menu */}
-      <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <DialogContent className="sm:max-w-lg p-0 h-full fixed top-0 right-0 m-0 sm:rounded-none rounded-none">
-          <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
-            <div className="fixed inset-0 z-10 overflow-y-auto bg-white dark:bg-gray-900 px-6 py-6">
-              <div className="flex items-center justify-between">
-                <NavLink to="/" className="-m-1.5 p-1.5 flex items-center gap-2">
-                  <div className="bg-gradient-to-r from-purple-600 to-blue-500 h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold">
-                    FB
-                  </div>
-                  <span className="font-semibold text-lg dark:text-white">FlowBoard</span>
-                </NavLink>
-                <button
-                  type="button"
-                  className="-m-2.5 rounded-md p-2.5 text-gray-700 dark:text-gray-300"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <span className="sr-only">Close menu</span>
-                  <X className="h-6 w-6" aria-hidden="true" />
-                </button>
-              </div>
-              <div className="mt-6 flow-root">
-                <div className="-my-6 divide-y divide-gray-200 dark:divide-gray-800">
-                  <div className="space-y-2 py-6">
-                    <ThemeToggle />
-                    {navigation.map((item) => (
-                      <NavLink
-                        key={item.name}
-                        to={item.href}
-                        className={({ isActive }) => cn(
-                          isActive
-                            ? "bg-gray-100 dark:bg-gray-800 text-primary"
-                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
-                          "-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7"
-                        )}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        {item.name}
-                      </NavLink>
-                    ))}
-                  </div>
-                  <div className="py-6">
-                    <NavLink
-                      to="/profile"
-                      className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Profile
-                    </NavLink>
-                    <button
-                      onClick={() => {
-                        handleSignOut();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-red-600 hover:bg-gray-50 dark:hover:bg-gray-800 w-full text-left"
-                    >
-                      Log out
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {mobileMenuOpen && (
+  <div className="md:hidden border-t">
+    <div className="container py-2">
+      <div className="flex justify-between items-center py-2">
+        
+        <ThemeToggle />
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="p-2 rounded-md hover:bg-accent"
+        >
+          <X className="h-6 w-6" />
+        </button>
+      </div>
+
+      {handleGlobalSearch && (
+        <form onSubmit={handleGlobalSearch} className="py-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="w-full pl-8"
+              onChange={(e) => setSearchQuery?.(e.target.value)}
+            />
           </div>
-        </DialogContent>
-      </Dialog>
+        </form>
+      )}
+
+      <nav className="flex flex-col space-y-1 py-2">
+        {navigation.map((item) => (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            className={({ isActive }) => cn(
+              "flex items-center rounded-md px-3 py-2 text-sm font-medium",
+              isActive 
+                ? "bg-accent text-accent-foreground" 
+                : "hover:bg-accent hover:text-accent-foreground"
+            )}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            {item.icon}
+            <span className="ml-2">{item.name}</span>
+          </NavLink>
+        ))}
+        
+        <Separator className="my-2" />
+        
+        
+        <NavLink
+          to="/profile"
+          className={({ isActive }) => cn(
+            "flex items-center rounded-md px-3 py-2 text-sm font-medium",
+            isActive
+              ? "bg-accent text-accent-foreground"
+              : "hover:bg-accent hover:text-accent-foreground"
+          )}
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <UserCircle className="h-5 w-5 mr-2" />
+          Profile
+        </NavLink>
+        
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="h-5 w-5 mr-2" />
+          Log out
+        </button>
+      </nav>
+    </div>
+  </div>
+)}
       
       {/* Global search dialog */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>

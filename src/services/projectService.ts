@@ -131,6 +131,15 @@ export const updateProject = async (id: string, updates: Partial<Project>): Prom
 
 export const deleteProject = async (id: string): Promise<boolean> => {
   try {
+    // First delete all tasks associated with the project
+    const { error: tasksError } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('project_id', id);
+    
+    if (tasksError) throw tasksError;
+    
+    // Then delete the project
     const { error } = await supabase
       .from('projects')
       .delete()

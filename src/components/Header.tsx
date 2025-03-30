@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { useQuery } from "@tanstack/react-query";
+import { fetchUserProfile } from "@/services/projectService";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +41,7 @@ const navigation = [
   { name: "Reports", href: "/reports" },
 ];
 
+
 interface HeaderProps {
   setSearchQuery?: (query: string) => void;
   handleGlobalSearch?: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -49,6 +52,12 @@ export function Header({ setSearchQuery, handleGlobalSearch }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: () => fetchUserProfile(user?.id || ""),
+    enabled: !!user,
+  });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
@@ -150,21 +159,23 @@ export function Header({ setSearchQuery, handleGlobalSearch }: HeaderProps) {
                   <Avatar className="h-9 w-9">
                     <AvatarImage src="" alt="" />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {user.email?.charAt(0).toUpperCase() || "U"}
+                    {userProfile?.username 
+    ? userProfile.username[0].toUpperCase()
+    : user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user.email?.split("@")[0]}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
+                <div className="flex flex-col space-y-1">
+    <p className="text-sm font-medium leading-none">
+      {userProfile?.username || user?.email?.split("@")[0]}
+    </p>
+    <p className="text-xs leading-none text-muted-foreground">
+      {user?.email}
+    </p>
+  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>

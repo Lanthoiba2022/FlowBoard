@@ -18,6 +18,7 @@ import { fetchUserProfile, updateUserProfile, fetchProjects, fetchTasks } from "
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie } from 'recharts';
+import { useQueryClient } from "@tanstack/react-query";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const ProfilePage = () => {
     bio: "",
   });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   
   // Stats states
   const [projectStats, setProjectStats] = useState({
@@ -156,7 +158,9 @@ const ProfilePage = () => {
         ...profileForm,
         avatar_url: avatarUrl
       });
-      
+      await queryClient.invalidateQueries({ 
+        queryKey: ['userProfile', user.id] 
+      });
       toast.success("Profile updated successfully");
       setIsEditProfileOpen(false);
     } catch (error) {
@@ -242,7 +246,9 @@ const ProfilePage = () => {
                   <Avatar className="h-24 w-24">
                     <AvatarImage src={avatarUrl || ""} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                      {userProfile?.full_name?.charAt(0) || userProfile?.username?.charAt(0) || user?.email?.charAt(0) || "U"}
+                    {userProfile?.username 
+    ? userProfile.username[0].toUpperCase()
+    : user?.email?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </div>

@@ -18,7 +18,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useAuth } from "@/context/AuthContext";
-import { fetchProjects, fetchTasks, Project, Task } from "@/services/projectService";
+import { fetchProjects, fetchTasks, Project, Task, fetchUserProfile } from "@/services/projectService";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateProjectDialog } from "@/components/CreateProjectDialog";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
@@ -77,6 +77,8 @@ const getStatusColor = (status: string) => {
   }
 };
 
+
+
 // Get status icon
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -96,6 +98,12 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Task[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: () => fetchUserProfile(user?.id || ""),
+    enabled: !!user,
+  });
 
   // Fetch projects
   const { data: projects = [] } = useQuery({
@@ -287,7 +295,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back, {user?.email?.split('@')[0]}</p>
+            <p className="text-muted-foreground">Welcome back, {userProfile?.username || user?.email?.split('@')[0]}</p>
           </div>
           <Button 
             className="bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 gap-2"

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,12 +50,14 @@ export function EditProjectDialog({ project, open, onOpenChange, onSuccess }: Ed
   });
 
   // Update form values when project changes
-  useState(() => {
-    form.reset({
-      name: project.name,
-      description: project.description || "",
-    });
-  });
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: project.name,
+        description: project.description || "",
+      });
+    }
+  }, [project, form, open]);
 
   const onSubmit = async (values: FormValues) => {
     try {

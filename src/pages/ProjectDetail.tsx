@@ -5,7 +5,7 @@ import { Header } from "@/components/Header";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { useAuth } from "@/context/AuthContext";
-import { Project, Task, fetchProjects, fetchTasks } from "@/services/projectService";
+import { Project, Task, fetchTasks } from "@/services/projectService";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -57,8 +57,30 @@ const ProjectDetail = () => {
   useEffect(() => {
     if (!projectId || !user) return;
 
-    const channel = supabase
-      .channel('public:tasks')
+    // Subscribe to project updates
+    const projectChannel = supabase
+      .channel('project-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'projects',
+          filter: `id=eq.${projectId}`
+        },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            setProject(payload.new as Project);
+          } else if (payload.eventType === 'DELETE') {
+            navigate('/projects');
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to task updates
+    const tasksChannel = supabase
+      .channel('tasks-changes')
       .on(
         'postgres_changes',
         {
@@ -82,9 +104,14 @@ const ProjectDetail = () => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(projectChannel);
+      supabase.removeChannel(tasksChannel);
     };
-  }, [projectId, user]);
+  }, [projectId, user, navigate]);
+
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setProject(updatedProject);
+  };
 
   if (isLoading || !project) {
     return (
@@ -103,7 +130,10 @@ const ProjectDetail = () => {
       <AnimatedBackground />
       <Header />
       <main className="flex-1 container px-4 py-6 mx-auto space-y-8 relative z-10">
-        <ProjectHeader project={project} />
+      <ProjectHeader 
+          project={project} 
+          onProjectUpdate={handleProjectUpdate}
+        />
         <KanbanBoard tasks={tasks} projectId={projectId} />
       </main>
     </div>
